@@ -33,14 +33,15 @@ class Discriminator(nn.Module):
         self.model = nn.Sequential(*layers)
     
     def forward(self,x,y):
+        # if != 1000, 0 pad
         x = torch.cat([x,y],dim=1)
         x = self.initial(x)
         x = self.model(x)
         return x
 
 def test():
-    x = torch.randn((1, 3, 256, 256))
-    y = torch.randn((1, 3, 256, 256))
+    x = torch.randn((1, 3, 1000, 1000))
+    y = torch.randn((1, 3, 1000, 1000))
     model = Discriminator(in_channels=3)
     preds = model(x, y)
     print(model)

@@ -9,7 +9,6 @@ from dataset import MapDataset
 from generator import Generator
 from discriminator import Discriminator
 
-
 def train_fn(disc,gen,loader,opt_disc,opt_gen,l1,bce,g_scaler,d_scaler):
     loop = tqdm(loader,leave=True)
     for idx , (x,y) in enumerate(loop):
@@ -18,6 +17,8 @@ def train_fn(disc,gen,loader,opt_disc,opt_gen,l1,bce,g_scaler,d_scaler):
         with torch.cuda.amp.autocast():
             y_fake = gen(x)
             D_real = disc(x,y)
+            print('x', x.shape)
+            print('y_fake', y_fake.shape)
             D_fake = disc(x, y_fake.detach())
             D_real_loss = bce(D_real,torch.ones_like(D_real))
             D_fake_loss = bce(D_fake,torch.zeros_like(D_fake))
