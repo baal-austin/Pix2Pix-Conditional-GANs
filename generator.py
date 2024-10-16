@@ -22,10 +22,10 @@ class Block(nn.Module):
         return self.dropout(x) if self.use_dropout else x
 
 class Generator(nn.Module):
-    def __init__(self,in_channels=3,features=64):
+    def __init__(self,in_channels=1,features=64):
         super().__init__()
         self.initial_down = nn.Sequential(
-            nn.Conv2d(in_channels,features,3,2,1,padding_mode='reflect'),
+            nn.Conv2d(1,features,4,2,1,padding_mode='reflect'),
             nn.LeakyReLU(0.2),
         )
         self.down1 = Block(features,features*2,down=True,act='leaky',use_dropout=False)
@@ -46,8 +46,12 @@ class Generator(nn.Module):
         self.up5 = Block(features*8*2,features*4,down=False,act='relu',use_dropout=False)
         self.up6 = Block(features*4*2,features*2,down=False,act='relu',use_dropout=False)
         self.up7 = Block(features*2*2,features,down=False,act='relu',use_dropout=False)
+        # self.final_up = nn.Sequential(
+        #     nn.ConvTranspose2d(features*2,in_channels,kernel_size=4,stride=2,padding=1),
+        #     nn.Tanh(),
+        # )
         self.final_up = nn.Sequential(
-            nn.ConvTranspose2d(features*2,in_channels,kernel_size=4,stride=2,padding=1),
+            nn.ConvTranspose2d(features * 2, 1, kernel_size=4, stride=2, padding=1),
             nn.Tanh(),
         )
 
@@ -71,55 +75,55 @@ class Generator(nn.Module):
         # 上采样阶段
         up1 = self.up1(bottleneck)
 
-        # 确保 d7 的尺寸与 up1 一致
+        # # 确保 d7 的尺寸与 up1 一致
         if up1.shape[2:] != d7.shape[2:]:
             d7 = F.interpolate(d7, size=up1.shape[2:], mode='bilinear', align_corners=True)
 
         up2 = self.up2(torch.cat([up1, d7], dim=1))
 
         # 打印形状用于调试
-        print("up2 shape:", up2.shape)
-        print("d6 shape:", d6.shape)
+        # print("up2 shape:", up2.shape)
+        # print("d6 shape:", d6.shape)
 
-        # 确保 up2 的尺寸与 d6 一致
+        # # 确保 up2 的尺寸与 d6 一致
         if up2.shape[2:] != d6.shape[2:]:
             d6 = F.interpolate(d6, size=up2.shape[2:], mode='bilinear', align_corners=True)
 
         up3 = self.up3(torch.cat([up2, d6], dim=1))
 
         # 打印形状用于调试
-        print("up3 shape:", up3.shape)
-        print("d5 shape:", d5.shape)
+        # print("up3 shape:", up3.shape)
+        # print("d5 shape:", d5.shape)
 
-        # 确保 up3 的尺寸与 d5 一致
+        # # 确保 up3 的尺寸与 d5 一致
         if up3.shape[2:] != d5.shape[2:]:
             d5 = F.interpolate(d5, size=up3.shape[2:], mode='bilinear', align_corners=True)
 
         up4 = self.up4(torch.cat([up3, d5], dim=1))
 
         # 打印形状用于调试
-        print("up4 shape:", up4.shape)
-        print("d4 shape:", d4.shape)
+        # print("up4 shape:", up4.shape)
+        # print("d4 shape:", d4.shape)
 
-        # 确保 up4 的尺寸与 d4 一致
+        # # 确保 up4 的尺寸与 d4 一致
         if up4.shape[2:] != d4.shape[2:]:
             d4 = F.interpolate(d4, size=up4.shape[2:], mode='bilinear', align_corners=True)
 
         up5 = self.up5(torch.cat([up4, d4], dim=1))
 
         # 打印形状用于调试
-        print("up5 shape:", up5.shape)
-        print("d3 shape:", d3.shape)
+        # print("up5 shape:", up5.shape)
+        # print("d3 shape:", d3.shape)
 
-        # 确保 up5 的尺寸与 d3 一致
+        # # 确保 up5 的尺寸与 d3 一致
         if up5.shape[2:] != d3.shape[2:]:
             d3 = F.interpolate(d3, size=up5.shape[2:], mode='bilinear', align_corners=True)
 
         up6 = self.up6(torch.cat([up5, d3], dim=1))
 
         # 打印形状用于调试
-        print("up6 shape:", up6.shape)
-        print("d2 shape:", d2.shape)
+        # print("up6 shape:", up6.shape)
+        # print("d2 shape:", d2.shape)
 
         # 确保 up6 的尺寸与 d2 一致
         if up6.shape[2:] != d2.shape[2:]:
@@ -128,8 +132,8 @@ class Generator(nn.Module):
         up7 = self.up7(torch.cat([up6, d2], dim=1))
 
         # 打印形状用于调试
-        print("up7 shape:", up7.shape)
-        print("d1 shape:", d1.shape)
+        # print("up7 shape:", up7.shape)
+        # print("d1 shape:", d1.shape)
 
         # 确保 up7 的尺寸与 d1 一致
         if up7.shape[2:] != d1.shape[2:]:
@@ -138,14 +142,14 @@ class Generator(nn.Module):
 
         #---
         ret = self.final_up(torch.cat([up7, d1], dim=1))
-        print('up7', up7.shape)
-        print('d1', d1.shape)
-        print('ret', ret.shape)
+        # print('up7', up7.shape)
+        # print('d1', d1.shape)
+        # print('ret', ret.shape)
         return ret
 
 
 def test():
-    x = torch.randn((1, 3, 500, 500))
+    x = torch.randn((1, 3, 1000, 1000))
     model = Generator(in_channels=3, features=64)
     preds = model(x)
     print(preds.shape)
